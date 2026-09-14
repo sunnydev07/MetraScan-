@@ -1,4 +1,5 @@
 import { ExtractedField, FieldCheck } from '../../models/Scan';
+import { getCitationForField } from '../../data/metrologyRulesDataset';
 
 export interface RuleEngineResult {
   fieldChecks: FieldCheck[];
@@ -6,6 +7,21 @@ export interface RuleEngineResult {
   complianceStatus: 'PASS' | 'PARTIAL' | 'FAIL';
   summary: string;
   missingFields: string[];
+}
+
+function attachCitation(check: FieldCheck): FieldCheck {
+  const doc = getCitationForField(check.id);
+  if (doc) {
+    check.statutoryCitation = {
+      title: doc.title,
+      url: doc.url,
+      category: doc.category,
+      year: doc.year,
+      dateOfIssue: doc.dateOfIssue,
+      description: doc.description,
+    };
+  }
+  return check;
 }
 
 export function validateRule6(fields: Record<string, ExtractedField>): RuleEngineResult {
@@ -16,78 +32,78 @@ export function validateRule6(fields: Record<string, ExtractedField>): RuleEngin
   const mfgName = fields.manufacturerName?.value;
   const mfgAddr = fields.manufacturerAddress?.value;
   if (mfgName && mfgAddr && mfgAddr.length > 10) {
-    checks.push({
+    checks.push(attachCitation({
       id: 'manufacturer_name_address',
       label: 'Manufacturer / Packer / Importer Name and Address',
       status: 'pass',
       evidence: fields.manufacturerName.raw || `${mfgName}, ${mfgAddr}`,
-      message: 'Manufacturer name and operational address successfully identified.',
-    });
+      message: 'Manufacturer name and operational address successfully identified under Rule 6(1)(a).',
+    }));
   } else if (mfgName) {
-    checks.push({
+    checks.push(attachCitation({
       id: 'manufacturer_name_address',
       label: 'Manufacturer / Packer / Importer Name and Address',
       status: 'warning',
       evidence: mfgName,
       message: 'Manufacturer name detected but complete address or postal code is incomplete.',
-    });
+    }));
   } else {
-    checks.push({
+    checks.push(attachCitation({
       id: 'manufacturer_name_address',
       label: 'Manufacturer / Packer / Importer Name and Address',
       status: 'fail',
       evidence: 'No manufacturer declaration found',
-      message: 'Missing mandatory manufacturer, packer, or importer name and address.',
-    });
+      message: 'Missing mandatory manufacturer, packer, or importer name and address under Rule 6(1)(a).',
+    }));
     missing.push('Manufacturer name and address');
   }
 
   // Check 2: Country of Origin
   const origin = fields.countryOfOrigin?.value;
   if (origin && !origin.includes('Domestic address')) {
-    checks.push({
+    checks.push(attachCitation({
       id: 'country_of_origin',
       label: 'Country of Origin',
       status: 'pass',
       evidence: fields.countryOfOrigin.raw || origin,
-      message: `Country of origin clearly declared: ${origin}.`,
-    });
+      message: `Country of origin clearly declared: ${origin} (Rule 6(1)(b) & 2026 E-commerce Amendment).`,
+    }));
   } else if (origin) {
-    checks.push({
+    checks.push(attachCitation({
       id: 'country_of_origin',
       label: 'Country of Origin',
       status: 'pass',
       evidence: origin,
       message: 'Domestic Indian manufacture inferred from registered domestic address.',
-    });
+    }));
   } else {
-    checks.push({
+    checks.push(attachCitation({
       id: 'country_of_origin',
       label: 'Country of Origin',
       status: 'warning',
       evidence: 'Not explicitly declared',
-      message: 'Country of origin not explicitly stated (applicable if imported).',
-    });
+      message: 'Country of origin not explicitly stated (applicable if imported under PCR Rule 6(1)(b)).',
+    }));
   }
 
   // Check 3: Common or Generic Product Name
   const prodName = fields.productName?.value;
   if (prodName && prodName.length >= 3) {
-    checks.push({
+    checks.push(attachCitation({
       id: 'product_name',
       label: 'Common / Generic Product Name',
       status: 'pass',
       evidence: prodName,
-      message: `Commodity generic/trade name detected: "${prodName}".`,
-    });
+      message: `Commodity generic/trade name detected: "${prodName}" under Rule 6(1)(c).`,
+    }));
   } else {
-    checks.push({
+    checks.push(attachCitation({
       id: 'product_name',
       label: 'Common / Generic Product Name',
       status: 'warning',
       evidence: 'Unclear or missing',
-      message: 'Product name unclear or not prominently placed in primary declaration.',
-    });
+      message: 'Product name unclear or not prominently placed in primary display panel.',
+    }));
     missing.push('Product name');
   }
 
@@ -95,72 +111,72 @@ export function validateRule6(fields: Record<string, ExtractedField>): RuleEngin
   const netQtyVal = fields.netQuantityValue?.value;
   const netQtyUnit = fields.netQuantityUnit?.value;
   if (netQtyVal && netQtyUnit) {
-    checks.push({
+    checks.push(attachCitation({
       id: 'net_quantity',
       label: 'Net Quantity',
       status: 'pass',
       evidence: fields.netQuantityValue.raw || `${netQtyVal} ${netQtyUnit}`,
-      message: `Standard net quantity declared: ${netQtyVal} ${netQtyUnit}.`,
-    });
+      message: `Standard net quantity declared: ${netQtyVal} ${netQtyUnit} (compliant with metric units & SoP 2023).`,
+    }));
   } else if (netQtyVal) {
-    checks.push({
+    checks.push(attachCitation({
       id: 'net_quantity',
       label: 'Net Quantity',
       status: 'fail',
       evidence: netQtyVal,
       message: 'Net quantity declared without legal metric measurement unit.',
-    });
+    }));
     missing.push('Net quantity unit');
   } else {
-    checks.push({
+    checks.push(attachCitation({
       id: 'net_quantity',
       label: 'Net Quantity',
       status: 'fail',
       evidence: 'Not detected',
-      message: 'Mandatory net quantity declaration is missing.',
-    });
+      message: 'Mandatory net quantity declaration is missing under Rule 6(1)(d).',
+    }));
     missing.push('Net quantity');
   }
 
   // Check 5: Month and Year of Manufacture / Packing / Import
   const monthYear = fields.monthYear?.value;
   if (monthYear) {
-    checks.push({
+    checks.push(attachCitation({
       id: 'month_year',
       label: 'Month & Year of Manufacture / Packing',
       status: 'pass',
       evidence: fields.monthYear.raw || monthYear,
-      message: `Date of manufacture / packaging declared: ${monthYear}.`,
-    });
+      message: `Date of manufacture / packaging declared: ${monthYear} (PCR 2013 Amendment).`,
+    }));
   } else {
-    checks.push({
+    checks.push(attachCitation({
       id: 'month_year',
       label: 'Month & Year of Manufacture / Packing',
       status: 'fail',
       evidence: 'Not detected',
-      message: 'Month and year of manufacture or packaging is missing.',
-    });
+      message: 'Month and year of manufacture or packaging is missing under Rule 6(1)(e).',
+    }));
     missing.push('Month/Year of manufacture');
   }
 
   // Check 6: Maximum Retail Price (MRP)
   const mrp = fields.mrp?.value;
   if (mrp) {
-    checks.push({
+    checks.push(attachCitation({
       id: 'mrp',
       label: 'Maximum Retail Price (MRP)',
       status: 'pass',
       evidence: fields.mrp.raw || mrp,
-      message: `Maximum Retail Price clearly declared: ${mrp} (incl. of all taxes).`,
-    });
+      message: `Maximum Retail Price clearly declared: ${mrp} (incl. of all taxes) under Rule 6(1)(f) & G.S.R. 226(E).`,
+    }));
   } else {
-    checks.push({
+    checks.push(attachCitation({
       id: 'mrp',
       label: 'Maximum Retail Price (MRP)',
       status: 'fail',
       evidence: 'Not detected',
-      message: 'Mandatory MRP declaration inclusive of taxes is missing.',
-    });
+      message: 'Mandatory MRP declaration inclusive of taxes is missing under Rule 6(1)(f).',
+    }));
     missing.push('Maximum Retail Price (MRP)');
   }
 
@@ -170,21 +186,21 @@ export function validateRule6(fields: Record<string, ExtractedField>): RuleEngin
   const careAddr = fields.consumerCareAddress?.value;
   if (carePhone || careEmail || careAddr) {
     const details = [carePhone, careEmail].filter(Boolean).join(', ');
-    checks.push({
+    checks.push(attachCitation({
       id: 'consumer_care',
       label: 'Consumer Care Contact Details',
       status: 'pass',
       evidence: details || 'Customer care helpline declared',
-      message: `Consumer complaint redressal channel declared: ${details || 'contact info present'}.`,
-    });
+      message: `Consumer complaint redressal channel declared: ${details || 'contact info present'} (PCR Rule 6(1)(g)).`,
+    }));
   } else {
-    checks.push({
+    checks.push(attachCitation({
       id: 'consumer_care',
       label: 'Consumer Care Contact Details',
       status: 'fail',
       evidence: 'Not detected',
-      message: 'Mandatory consumer care helpline, email, or physical address is missing.',
-    });
+      message: 'Mandatory consumer care helpline, email, or physical address is missing under Rule 6(1)(g).',
+    }));
     missing.push('Consumer care contact details');
   }
 

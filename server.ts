@@ -7,6 +7,7 @@ import { initSocket } from './server/socket';
 import healthRouter from './server/routes/health';
 import scansRouter from './server/routes/scans';
 import chatRouter from './server/routes/chat';
+import regulationsRouter from './server/routes/regulations';
 import { seedDemoData } from './server/seed/demoData';
 
 async function startServer() {
@@ -40,6 +41,7 @@ async function startServer() {
   app.use('/api/health', healthRouter);
   app.use('/api/scans', scansRouter);
   app.use('/api/chat', chatRouter);
+  app.use('/api/regulations', regulationsRouter);
 
   // Vite middleware for development vs static build in production
   if (process.env.NODE_ENV !== 'production') {

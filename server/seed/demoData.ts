@@ -1,6 +1,7 @@
 import { saveScan } from '../db';
 import { IScan } from '../models/Scan';
 import { cacheService } from '../services/cache/cacheService';
+import { getCitationForField } from '../data/metrologyRulesDataset';
 
 export const DEMO_SCANS: IScan[] = [
   {
@@ -181,10 +182,29 @@ export const DEMO_SCANS: IScan[] = [
 export async function seedDemoData(): Promise<void> {
   console.log('[Seed] Seeding sample compliance scans...');
   for (const scan of DEMO_SCANS) {
+    if (scan.fieldChecks) {
+      scan.fieldChecks = scan.fieldChecks.map((check) => {
+        const doc = getCitationForField(check.id);
+        if (doc) {
+          return {
+            ...check,
+            statutoryCitation: {
+              title: doc.title,
+              url: doc.url,
+              category: doc.category,
+              year: doc.year,
+              dateOfIssue: doc.dateOfIssue,
+              description: doc.description,
+            },
+          };
+        }
+        return check;
+      });
+    }
     await saveScan(scan);
     if (scan.barcode) {
       cacheService.set(`barcode:${scan.barcode}`, scan);
     }
   }
-  console.log(`[Seed] Successfully seeded ${DEMO_SCANS.length} scans`);
+  console.log(`[Seed] Successfully seeded ${DEMO_SCANS.length} scans with statutory citations`);
 }

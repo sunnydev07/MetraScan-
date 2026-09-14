@@ -8,12 +8,23 @@ export interface ExtractedField {
   found: boolean;
 }
 
+export interface StatutoryCitation {
+  title: string;
+  url: string;
+  category?: string;
+  year?: string;
+  dateOfIssue?: string;
+  ruleClause?: string;
+  description?: string;
+}
+
 export interface FieldCheck {
   id: string;
   label: string;
   status: 'pass' | 'fail' | 'warning' | 'skipped';
   evidence: string;
   message: string;
+  statutoryCitation?: StatutoryCitation;
 }
 
 export interface AgentEvent {

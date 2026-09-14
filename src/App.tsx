@@ -8,7 +8,8 @@ import { ScanPage } from './pages/ScanPage';
 import { ReportPage } from './pages/ReportPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { getHealth } from './api/scans';
-import { ShieldCheck, Camera, LayoutDashboard, FileCheck2, Scale } from 'lucide-react';
+import { ShieldCheck, Camera, LayoutDashboard, FileCheck2, Scale, BookOpen } from 'lucide-react';
+import { RegulationsModal } from './components/RegulationsModal';
 
 type ViewMode = 'scan' | 'report' | 'dashboard';
 
@@ -16,6 +17,7 @@ export default function App() {
   const [view, setView] = useState<ViewMode>('scan');
   const [selectedScanId, setSelectedScanId] = useState<string | null>(null);
   const [health, setHealth] = useState<{ status: string; demoMode: boolean; database: string } | null>(null);
+  const [showRegulationsModal, setShowRegulationsModal] = useState<boolean>(false);
 
   useEffect(() => {
     getHealth()
@@ -111,6 +113,18 @@ export default function App() {
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span>Officer Log</span>
             </button>
+
+            <button
+              id="nav-tab-regulations"
+              type="button"
+              onClick={() => setShowRegulationsModal(true)}
+              className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-950/60 text-blue-300 border border-blue-500/30 hover:bg-blue-900/60 transition-all"
+              title="Official Legal Metrology Department Acts, Rules & SoP Repository"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+              <span className="hidden sm:inline">Statutory Rules (82)</span>
+              <span className="sm:hidden">Rules</span>
+            </button>
           </div>
         </div>
       </header>
@@ -139,6 +153,12 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Official Regulations Repository Modal */}
+      <RegulationsModal
+        isOpen={showRegulationsModal}
+        onClose={() => setShowRegulationsModal(false)}
+      />
 
       {/* Footer & Disclaimer */}
       <footer className="border-t border-white/10 bg-slate-950/70 backdrop-blur-md px-4 sm:px-6 py-4 text-xs text-slate-500 relative z-10 shadow-lg">

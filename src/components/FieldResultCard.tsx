@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCircle2, AlertTriangle, XCircle, FileText, Compass, Tag } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle2, AlertTriangle, XCircle, FileText, ExternalLink, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
 import { FieldCheck, ExtractedField } from '../types';
 
 interface FieldResultCardProps {
@@ -13,6 +13,8 @@ export const FieldResultCard: React.FC<FieldResultCardProps> = ({
   fieldData,
   index,
 }) => {
+  const [showCitationDetails, setShowCitationDetails] = useState(false);
+
   const isPass = check.status === 'pass';
   const isWarning = check.status === 'warning';
   const isFail = check.status === 'fail';
@@ -54,6 +56,7 @@ export const FieldResultCard: React.FC<FieldResultCardProps> = ({
 
   const StatusIcon = statusConfig.icon;
   const confidencePercent = fieldData ? Math.round(fieldData.confidence * 100) : 0;
+  const citation = check.statutoryCitation;
 
   return (
     <div
@@ -74,6 +77,11 @@ export const FieldResultCard: React.FC<FieldResultCardProps> = ({
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border backdrop-blur-md ${statusConfig.pillBg}`}>
                 {statusConfig.label}
               </span>
+              {citation && (
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-950/50 text-blue-300 border border-blue-500/30">
+                  {citation.category}
+                </span>
+              )}
             </div>
             <h3 className="text-sm sm:text-base font-semibold text-slate-100">
               {check.label}
@@ -129,6 +137,59 @@ export const FieldResultCard: React.FC<FieldResultCardProps> = ({
           {check.message}
         </p>
       </div>
+
+      {/* Statutory Legal Metrology Citation Box */}
+      {citation && (
+        <div className="mt-3 pt-3 border-t border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+              <span className="text-[11px] font-semibold text-slate-300">
+                Official Metrology Department Reference
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {citation.url && (
+                <a
+                  href={citation.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  <span>Official Gazette</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowCitationDetails(!showCitationDetails)}
+                className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center gap-0.5 ml-1"
+              >
+                {showCitationDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-slate-300 mt-1 font-medium line-clamp-1">
+            {citation.title} {citation.year ? `(${citation.year})` : ''}
+          </p>
+
+          {showCitationDetails && (
+            <div className="mt-2 p-2.5 rounded-lg bg-blue-950/20 border border-blue-500/20 text-[11px] text-slate-300 space-y-1">
+              <p className="text-slate-300 font-normal leading-relaxed">
+                {citation.description}
+              </p>
+              {citation.dateOfIssue && (
+                <p className="text-[10px] text-slate-400 font-mono">
+                  Date of Gazette/Circular: {citation.dateOfIssue}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
+

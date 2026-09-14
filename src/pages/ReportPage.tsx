@@ -6,7 +6,8 @@ import { ComplianceSummary } from '../components/ComplianceSummary';
 import { FieldResultCard } from '../components/FieldResultCard';
 import { AgentStatusPanel } from '../components/AgentStatusPanel';
 import { ProductAiAgentChat } from '../components/ProductAiAgentChat';
-import { ArrowLeft, RefreshCw, FileText, ChevronDown, ChevronUp, Printer, LayoutDashboard, Bot, Sparkles, MessageSquare } from 'lucide-react';
+import { RegulationsModal } from '../components/RegulationsModal';
+import { ArrowLeft, RefreshCw, FileText, ChevronDown, ChevronUp, Printer, LayoutDashboard, Bot, Sparkles, MessageSquare, BookOpen } from 'lucide-react';
 import { getSocket, joinScanRoom } from '../socket/socketClient';
 
 interface ReportPageProps {
@@ -24,6 +25,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showRawOcr, setShowRawOcr] = useState(false);
+  const [showRegulationsModal, setShowRegulationsModal] = useState(false);
 
   const fetchScanData = async () => {
     try {
@@ -215,13 +217,23 @@ export const ReportPage: React.FC<ReportPageProps> = ({
         variants={listContainerVariants}
         className="space-y-4"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
             Rule 6 Mandatory Declarations Breakdown ({checks.length} Items)
           </h3>
-          <span className="text-xs text-slate-400">
-            Legal Metrology (Packaged Commodities) Rules, 2011
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 hidden sm:inline">
+              Legal Metrology (Packaged Commodities) Rules, 2011
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowRegulationsModal(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-950/60 hover:bg-blue-900/60 border border-blue-500/30 text-[11px] font-semibold text-blue-300 transition-colors"
+            >
+              <BookOpen className="w-3 h-3 text-blue-400" />
+              <span>Browse All 82 Regulations</span>
+            </button>
+          </div>
         </div>
 
         <motion.div
@@ -329,6 +341,12 @@ export const ReportPage: React.FC<ReportPageProps> = ({
           <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
         </button>
       </div>
+
+      {/* Official Legal Metrology Regulations Modal */}
+      <RegulationsModal
+        isOpen={showRegulationsModal}
+        onClose={() => setShowRegulationsModal(false)}
+      />
     </motion.div>
   );
 };

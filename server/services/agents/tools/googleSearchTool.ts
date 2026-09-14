@@ -1,3 +1,5 @@
+import { searchRegulations, OFFICIAL_METROLOGY_DOCUMENTS } from '../../../data/metrologyRulesDataset';
+
 export interface GoogleSearchSource {
   title: string;
   url: string;
@@ -19,7 +21,8 @@ export interface GoogleSearchResult {
 
 /**
  * Google Search Tool for Legal Metrology AI Agent
- * Grounded query engine for querying specific product regulations and company details.
+ * Grounded query engine for querying specific product regulations and company details,
+ * powered by the official 82-document Ministry of Consumer Affairs Legal Metrology corpus.
  */
 export async function googleSearchTool(input: {
   query: string;
@@ -28,58 +31,100 @@ export async function googleSearchTool(input: {
   productName?: string;
 }): Promise<GoogleSearchResult> {
   // Simulate realistic network latency for Google Search query execution
-  await new Promise((resolve) => setTimeout(resolve, 400));
+  await new Promise((resolve) => setTimeout(resolve, 350));
 
   const rawQuery = input.query.trim();
   const q = rawQuery.toLowerCase();
-  const focus = input.focus || (q.includes('rule') || q.includes('regulation') || q.includes('act') || q.includes('fssai') || q.includes('statute') || q.includes('metrology') || q.includes('font') || q.includes('section')
+  const focus = input.focus || (
+    q.includes('rule') || q.includes('regulation') || q.includes('act') || q.includes('fssai') ||
+    q.includes('statute') || q.includes('metrology') || q.includes('font') || q.includes('section') ||
+    q.includes('jan vishwas') || q.includes('coo') || q.includes('origin') || q.includes('qr') ||
+    q.includes('edible oil') || q.includes('sop') || q.includes('garment') || q.includes('pan masala')
     ? 'regulation'
     : (q.includes('company') || q.includes('cin') || q.includes('mca') || q.includes('gstin') || q.includes('address') || q.includes('director') || q.includes('manufacturer') || q.includes('packer')
       ? 'company_details'
-      : 'general'));
+      : 'general')
+  );
 
   const sources: GoogleSearchSource[] = [];
   const webSearchQueries: string[] = [];
 
-  // Generate Google Search query strings
-  if (focus === 'regulation' || q.includes('rule') || q.includes('metrology')) {
+  // Generate Google Search query strings & query official documents
+  if (focus === 'regulation' || q.includes('rule') || q.includes('metrology') || q.includes('act')) {
     webSearchQueries.push(
-      `"Legal Metrology (Packaged Commodities) Rules 2011" ${rawQuery}`,
-      `Department of Consumer Affairs circulars ${rawQuery}`,
-      `FSSAI packaging labelling regulations gazette notification`
+      `"Legal Metrology (Packaged Commodities) Rules" ${rawQuery}`,
+      `Department of Consumer Affairs gazette notification ${rawQuery}`,
+      `Legal Metrology Department official circulars and SoP`
     );
 
-    // Provide relevant regulatory provisions based on query keywords
+    // Retrieve official gazette documents from the 82-item ministry repository
+    const matchedDocs = searchRegulations(rawQuery);
+    if (matchedDocs.length > 0) {
+      matchedDocs.slice(0, 4).forEach((doc) => {
+        sources.push({
+          title: `${doc.title} (${doc.year || 'Gazette'})`,
+          url: doc.url,
+          snippet: doc.description,
+          category: 'regulation',
+          authority: 'Ministry of Consumer Affairs, Government of India',
+          referenceNumber: doc.dateOfIssue ? `Issued: ${doc.dateOfIssue}` : `Category: ${doc.category}`,
+        });
+      });
+    }
+
+    // Specialized statutory provisions based on query keywords
     if (q.includes('font') || q.includes('size') || q.includes('height')) {
       sources.push({
         title: 'Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 7: Minimum Height of Numerals & Letters',
-        url: 'https://consumeraffairs.nic.in/acts-and-rules/legal-metrology-packaged-commodities-rules-2011',
-        snippet: 'Under Rule 7 & Schedule II, minimum font height for net quantity: up to 50g/ml is 1.0mm (blown/moulded 2.0mm); 50g-100g is 1.5mm; 100g-500g is 2.0mm; 500g-1kg is 4.0mm; >1kg is 6.0mm. Principle display panel area proportion dictates statutory legibility.',
+        url: 'http://consumeraffairs.gov.in/public/upload/files/8_1732871406.pdf',
+        snippet: 'Under Rule 7 & Schedule II, minimum font height for net quantity: up to 50g/ml is 1.0mm (blown/moulded 2.0mm); 50g-100g is 1.5mm; 100g-500g is 2.0mm; 500g-1kg is 4.0mm; >1kg is 6.0mm. Area of Principal Display Panel dictates height.',
         category: 'regulation',
         authority: 'Ministry of Consumer Affairs, Food & Public Distribution',
-        referenceNumber: 'G.S.R. 202(E) / Rule 7 & Schedule II',
+        referenceNumber: 'Rule 7 & Schedule II',
       });
     }
 
     if (q.includes('mrp') || q.includes('price') || q.includes('tax') || q.includes('dual')) {
       sources.push({
-        title: 'Legal Metrology Rules - Rule 6(1)(e) & Section 18(2): Maximum Retail Price & Dual-Pricing Prohibition',
-        url: 'https://consumeraffairs.nic.in/notifications/dual-mrp-amendment',
-        snippet: 'Rule 6(1)(e) mandates retail sale price in format "Maximum or Max. Retail Price Rs. ... / ₹ ... inclusive of all taxes". Section 18(2) strictly bans displaying or charging dual MRPs for identical pre-packaged goods across different channels, punishable under Section 36.',
+        title: 'The Legal Metrology (Packaged Commodities) Amendment Rules, 2022 (G.S.R. 226(E))',
+        url: 'http://consumeraffairs.gov.in/public/upload/files/GSR226_1732871458.pdf',
+        snippet: 'Mandatory Maximum Retail Price (MRP) format "MRP Rs. ... / ₹ ... inclusive of all taxes" and Unit Sale Price (USP). Section 18(2) of The Legal Metrology Act 2009 bans dual MRPs across retail points.',
         category: 'regulation',
-        authority: 'Central Legal Metrology Division, New Delhi',
-        referenceNumber: 'Sec 18(2) & Sec 36, Legal Metrology Act 2009',
+        authority: 'Legal Metrology Division, New Delhi',
+        referenceNumber: 'G.S.R. 226(E) & Sec 18(2)',
       });
     }
 
-    if (q.includes('net') || q.includes('quantity') || q.includes('unit') || q.includes('metric')) {
+    if (q.includes('coo') || q.includes('origin') || q.includes('ecommerce') || q.includes('e-commerce') || q.includes('country')) {
       sources.push({
-        title: 'Legal Metrology Rules - Rule 6(1)(d) & Rule 12: Metric Units & Net Quantity Standard Formats',
-        url: 'https://consumeraffairs.nic.in/acts-and-rules/net-quantity-declarations',
-        snippet: 'Rule 6(1)(d) mandates net quantity in terms of standard unit of weight or measure (g, kg for solid; ml, L for liquid). Symbol symbols must be lowercase (e.g., "g" not "gms" or "gm"; "ml" or "mL"; "kg" not "Kgs"). Symbols must not be pluralized.',
+        title: 'The Legal Metrology (Packaged Commodities) (Amendment) Rules, 2026 (COO Filter on E-Commerce)',
+        url: 'https://consumeraffairs.gov.in/public/upload/files/2026.02.13%20PCR%201st%20COO%20Filter%20on%20e-commerce%20websites_1771231030.pdf',
+        snippet: 'Statutory mandate requiring e-commerce platforms to implement a prominent Country of Origin filter on search and storefront catalog views to enable Indian origin transparency.',
         category: 'regulation',
-        authority: 'Ministry of Consumer Affairs, Food & Public Distribution',
-        referenceNumber: 'Rule 6(1)(d) & Rule 12',
+        authority: 'Ministry of Consumer Affairs, Legal Metrology Division',
+        referenceNumber: 'Notification 13/02/2026',
+      });
+    }
+
+    if (q.includes('oil') || q.includes('fat') || q.includes('edible')) {
+      sources.push({
+        title: 'SoP for Determination of the Net Quantity of Commodities (Edible Oils & Fats) dated 29.12.2023',
+        url: 'http://consumeraffairs.gov.in/public/upload/files/2023.12.29%20Standard%20Operating%20Procedure%20for%20Edible%20oil%20&%20Fats%20Net%20Quantity%20Measurement%20signed%20copy_1732872010.pdf',
+        snippet: 'Standard Operating Procedure for testing net quantity of edible oils and vegetable fats. Mandates volume correction to standard reference temperature of 30°C to prevent thermal expansion loss.',
+        category: 'regulation',
+        authority: 'Central Legal Metrology Division',
+        referenceNumber: 'SoP dated 29.12.2023',
+      });
+    }
+
+    if (q.includes('jan vishwas') || q.includes('penalty') || q.includes('fine') || q.includes('decriminal')) {
+      sources.push({
+        title: 'The Jan Vishwas (Amendment of Provisions) Act, 2026',
+        url: 'https://consumeraffairs.gov.in/public/upload/files/2026.4.8%20Jan%20Vishwas%20Act%202026_1777014384.pdf',
+        snippet: 'Landmark parliamentary legislation decriminalizing minor packaging declaration defects, introducing compounding of offenses and structured administrative penalties under Section 36.',
+        category: 'regulation',
+        authority: 'Parliament of India / Ministry of Consumer Affairs',
+        referenceNumber: 'Act of 2026 / Implementation 27/04/2026',
       });
     }
 
@@ -87,22 +132,24 @@ export async function googleSearchTool(input: {
       sources.push({
         title: 'Food Safety and Standards (Labelling and Display) Regulations, 2020',
         url: 'https://www.fssai.gov.in/upload/notifications/2020/12/5fd8852709e90Gazette_Notification_Labelling_Display_14_12_2020.pdf',
-        snippet: 'Mandates 14-digit FSSAI FoSCoS license number and logo on principal display panel, nutritional facts per 100g/serving, complete list of ingredients in descending order, allergen declarations, and green/brown veg/non-veg emblem.',
+        snippet: 'Mandates 14-digit FSSAI FoSCoS license number and logo on principal display panel, nutritional facts per 100g/serving, complete list of ingredients in descending order, and allergen declarations.',
         category: 'regulation',
         authority: 'Food Safety and Standards Authority of India (FSSAI)',
         referenceNumber: 'F. No. 1-94/FSSAI/SP(L&C)/2020',
       });
     }
 
-    // Default primary statutory source
-    sources.push({
-      title: 'The Legal Metrology (Packaged Commodities) Amendment Rules, 2021 & 2022',
-      url: 'https://consumeraffairs.nic.in/acts-and-rules/legal-metrology-amendments',
-      snippet: 'Key mandatory declarations under Rule 6(1): (a) Name and complete address of manufacturer/packer/importer; (b) Country of origin; (c) Common or generic name; (d) Metric net quantity; (e) Month and year of manufacture/pre-packing; (f) Retail sale price (MRP incl. of all taxes); (g) Consumer care helpline, email and contact address.',
-      category: 'regulation',
-      authority: 'Ministry of Consumer Affairs',
-      referenceNumber: 'G.S.R. 779(E) & G.S.R. 518(E)',
-    });
+    // Default primary statutory source if none added
+    if (sources.length === 0) {
+      sources.push({
+        title: 'The Legal Metrology (Packaged Commodities) Rules, 2011',
+        url: 'http://consumeraffairs.gov.in/public/upload/files/8_1732871406.pdf',
+        snippet: 'The master regulation specifying 7 mandatory declarations under Rule 6(1): Manufacturer name/address, Country of origin, Common product name, Net quantity, Month/Year, MRP, and Consumer care contacts.',
+        category: 'regulation',
+        authority: 'Ministry of Consumer Affairs',
+        referenceNumber: 'Master Regulation 07/03/2011',
+      });
+    }
   }
 
   if (focus === 'company_details' || q.includes('company') || q.includes('manufacturer') || q.includes('tata') || q.includes('parle') || q.includes('amul') || q.includes('nestle') || q.includes('dabur')) {
