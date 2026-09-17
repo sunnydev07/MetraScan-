@@ -135,6 +135,7 @@ export async function processScanPipeline(
       message: 'Synthesizing compliance verdict and audit summary...',
     });
 
+    const currentScan = await findScanById(scanId);
     const finalScan: Partial<IScan> = {
       status: 'completed',
       stage: STAGES.COMPLETED,
@@ -144,7 +145,7 @@ export async function processScanPipeline(
       complianceScore: ruleResults.complianceScore,
       complianceStatus: ruleResults.complianceStatus,
       summary: ruleResults.summary,
-      demo: true,
+      demo: currentScan?.demo ?? false,
       cacheHit: false,
     };
 

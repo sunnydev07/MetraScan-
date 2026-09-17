@@ -20,9 +20,21 @@ export function initSocket(server: HttpServer): SocketIOServer {
       }
     });
 
+    // Client leaves a scan room
+    socket.on('scan:leave', ({ scanId }: { scanId: string }) => {
+      if (scanId) {
+        socket.leave(`scan:${scanId}`);
+      }
+    });
+
     // Client joins officer dashboard room
     socket.on('dashboard:join', () => {
       socket.join('dashboard:officer');
+    });
+
+    // Client leaves officer dashboard room
+    socket.on('dashboard:leave', () => {
+      socket.leave('dashboard:officer');
     });
 
     socket.on('scan:cancel', ({ scanId }: { scanId: string }) => {

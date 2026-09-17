@@ -4,6 +4,7 @@ import { IScan, ScanModel } from './models/Scan';
 
 let isConnected = false;
 const inMemoryStore = new Map<string, IScan>();
+const IN_MEMORY_MAX_ENTRIES = 500;
 
 export async function connectDb(): Promise<boolean> {
   if (isConnected) return true;
@@ -30,6 +31,10 @@ export function isDbConnected(): boolean {
 
 export async function saveScan(scanData: IScan): Promise<IScan> {
   // Always store in memory for fast retrieval & demo fallback
+  if (inMemoryStore.size >= IN_MEMORY_MAX_ENTRIES) {
+    const oldestKey = inMemoryStore.keys().next().value;
+    if (oldestKey) inMemoryStore.delete(oldestKey);
+  }
   inMemoryStore.set(scanData.scanId, { ...scanData });
 
   if (isDbConnected()) {

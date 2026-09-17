@@ -32,7 +32,17 @@ export function joinScanRoom(scanId: string): void {
   s.emit('scan:join', { scanId });
 }
 
+export function leaveScanRoom(scanId: string): void {
+  const s = getSocket();
+  s.emit('scan:leave', { scanId });
+}
+
 export function joinDashboardRoom(): void {
   const s = getSocket();
   s.emit('dashboard:join');
+}
+
+export function leaveDashboardRoom(): void {
+  const s = getSocket();
+  s.emit('dashboard:leave');
 }

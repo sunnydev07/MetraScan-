@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { listScans } from '../api/scans';
 import { DashboardScanItem } from '../types';
 import { ScanTable } from '../components/ScanTable';
-import { getSocket, joinDashboardRoom } from '../socket/socketClient';
+import { getSocket, joinDashboardRoom, leaveDashboardRoom } from '../socket/socketClient';
 import { Shield, Camera, RefreshCw, CheckCircle2, ShieldAlert, Sparkles, Activity } from 'lucide-react';
 
 interface DashboardPageProps {
@@ -63,6 +63,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('dashboard:new_scan', handleNewScan);
+      leaveDashboardRoom();
     };
   }, []);
 

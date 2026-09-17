@@ -4,7 +4,7 @@ import { ScannerHUD } from '../components/ScannerHUD';
 import { ScanProgress } from '../components/ScanProgress';
 import { RuleMatrix } from '../components/RuleMatrix';
 import { uploadScan, triggerDemoScan } from '../api/scans';
-import { getSocket, joinScanRoom } from '../socket/socketClient';
+import { getSocket, joinScanRoom, leaveScanRoom } from '../socket/socketClient';
 import { Shield, Sparkles, AlertCircle, ArrowUpRight, Scale } from 'lucide-react';
 
 interface ScanPageProps {
@@ -54,6 +54,7 @@ export const ScanPage: React.FC<ScanPageProps> = ({
       socket.off('scan:progress', handleProgress);
       socket.off('scan:completed', handleProgress);
       socket.off('scan:error', handleProgress);
+      leaveScanRoom(currentScanId);
     };
   }, [currentScanId, onScanComplete]);
 

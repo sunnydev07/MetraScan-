@@ -78,12 +78,23 @@ const ExtractedFieldSchema = new Schema<ExtractedField>({
   found: { type: Boolean, default: false },
 }, { _id: false });
 
+const StatutoryCitationSchema = new Schema({
+  title: { type: String },
+  url: { type: String },
+  category: { type: String },
+  year: { type: String },
+  dateOfIssue: { type: String },
+  ruleClause: { type: String },
+  description: { type: String },
+}, { _id: false });
+
 const FieldCheckSchema = new Schema<FieldCheck>({
   id: { type: String, required: true },
   label: { type: String, required: true },
   status: { type: String, enum: ['pass', 'fail', 'warning', 'skipped'], required: true },
   evidence: { type: String, default: '' },
   message: { type: String, default: '' },
+  statutoryCitation: { type: StatutoryCitationSchema, default: undefined },
 }, { _id: false });
 
 const AgentEventSchema = new Schema<AgentEvent>({
@@ -131,4 +142,4 @@ export const ScanSchema = new Schema<ScanDocument>({
   timestamps: true,
 });
 
-export const ScanModel = mongoose.models.Scan || mongoose.model<IScan>('Scan', ScanSchema);
+export const ScanModel = mongoose.models.Scan || mongoose.model<ScanDocument>('Scan', ScanSchema);

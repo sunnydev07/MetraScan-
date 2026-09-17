@@ -8,7 +8,7 @@ import { AgentStatusPanel } from '../components/AgentStatusPanel';
 import { ProductAiAgentChat } from '../components/ProductAiAgentChat';
 import { RegulationsModal } from '../components/RegulationsModal';
 import { ArrowLeft, RefreshCw, FileText, ChevronDown, ChevronUp, Printer, LayoutDashboard, Bot, Sparkles, MessageSquare, BookOpen } from 'lucide-react';
-import { getSocket, joinScanRoom } from '../socket/socketClient';
+import { getSocket, joinScanRoom, leaveScanRoom } from '../socket/socketClient';
 
 interface ReportPageProps {
   scanId: string;
@@ -78,6 +78,7 @@ export const ReportPage: React.FC<ReportPageProps> = ({
       socket.off('agent:started', handleAgentUpdate);
       socket.off('agent:tool_call', handleAgentUpdate);
       socket.off('agent:tool_result', handleAgentUpdate);
+      leaveScanRoom(scanId);
     };
   }, [scanId]);
 

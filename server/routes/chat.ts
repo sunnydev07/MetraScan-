@@ -285,17 +285,17 @@ RULES:
         // Check if any executed googleSearch tool can supply grounding sources
         const executedGoogleCall = executedToolCalls.find((tc) => tc.tool === 'googleSearch');
         if (executedGoogleCall?.result) {
-          const res = executedGoogleCall.result as GoogleSearchResult;
+          const googleResult = executedGoogleCall.result as GoogleSearchResult;
           if (!groundingMetadata) {
             groundingMetadata = {
-              webSearchQueries: res.webSearchQueries || [res.query],
-              sources: res.sources || [],
-              groundingChunks: res.sources?.map((s) => ({
+              webSearchQueries: googleResult.webSearchQueries || [googleResult.query],
+              sources: googleResult.sources || [],
+              groundingChunks: googleResult.sources?.map((s) => ({
                 web: { uri: s.url, title: s.title },
               })) || [],
             };
-          } else if (res.sources && res.sources.length > 0) {
-            groundingMetadata.sources = [...(groundingMetadata.sources || []), ...res.sources];
+          } else if (googleResult.sources && googleResult.sources.length > 0) {
+            groundingMetadata.sources = [...(groundingMetadata.sources || []), ...googleResult.sources];
           }
         }
 

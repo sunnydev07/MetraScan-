@@ -88,8 +88,7 @@ export function extractFields(rawText: string, ocrConfidence = 0.95): Record<str
       // Check if this line or next line contains address/pincode
       const nextLine = lines[i + 1] || '';
       const combined = `${content} ${nextLine}`.trim();
-      const pinMatch = combined.match(PINCODE_REGEX);
-
+  
       // Name is usually the first phrase
       const nameMatch = content.split(/,|\n/)[0];
       mfgName = nameMatch.trim();
@@ -166,7 +165,7 @@ export function extractFields(rawText: string, ocrConfidence = 0.95): Record<str
   let fssaiRaw: string | null = null;
   const fssaiMatch = fullText.match(FSSAI_REGEX);
   if (fssaiMatch) {
-    fssaiVal = fssaiMatch[2];
+    fssaiVal = fssaiMatch[1];
     fssaiRaw = fssaiMatch[0].trim();
   }
 

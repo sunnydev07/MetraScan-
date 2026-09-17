@@ -8,8 +8,22 @@ interface CacheEntry {
 class CacheService {
   private memoryCache = new Map<string, CacheEntry>();
   private defaultTtlMs = 30 * 60 * 1000; // 30 minutes
+  private maxEntries = 1000;
+
+  constructor() {
+    // Periodic cleanup of expired entries every 5 minutes
+    setInterval(() => this.cleanup(), 5 * 60 * 1000);
+  }
 
   public set(key: string, scan: IScan, ttlMs?: number): void {
+    // Evict oldest entry if at capacity
+    if (this.memoryCache.size >= this.maxEntries) {
+      const oldestKey = this.memoryCache.keys().next().value;
+      if (oldestKey) {
+        this.memoryCache.delete(oldestKey);
+      }
+    }
+
     const expiresAt = Date.now() + (ttlMs || this.defaultTtlMs);
     this.memoryCache.set(key, { scan, expiresAt });
   }
@@ -36,6 +50,15 @@ class CacheService {
 
   public clear(): void {
     this.memoryCache.clear();
+  }
+
+  private cleanup(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.memoryCache) {
+      if (now > entry.expiresAt) {
+        this.memoryCache.delete(key);
+      }
+    }
   }
 }
 

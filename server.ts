@@ -9,6 +9,7 @@ import scansRouter from './server/routes/scans';
 import chatRouter from './server/routes/chat';
 import regulationsRouter from './server/routes/regulations';
 import { seedDemoData } from './server/seed/demoData';
+import mongoose from 'mongoose';
 
 async function startServer() {
   const app = express();
@@ -18,12 +19,24 @@ async function startServer() {
   initSocket(httpServer);
 
   // Standard middleware
-  app.use(express.json());
+  app.use(express.json({ limit: '2mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  // CORS headers
+  // CORS headers — restricted to configured client origin
+  const allowedOrigins = [
+    config.clientUrl,
+    `http://localhost:${config.port}`,
+    `http://127.0.0.1:${config.port}`,
+  ].filter(Boolean);
+
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+    } else if (!origin) {
+      // Allow same-origin requests (no Origin header)
+      res.header('Access-Control-Allow-Origin', config.clientUrl);
+    }
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     if (req.method === 'OPTIONS') {
@@ -62,6 +75,24 @@ async function startServer() {
   httpServer.listen(config.port, config.host, () => {
     console.log(`[Server] SIH26034 Compliance Scanner running on http://${config.host}:${config.port}`);
   });
+
+  // Graceful shutdown
+  const shutdown = async (signal: string) => {
+    console.log(`[Server] Received ${signal}. Shutting down gracefully...`);
+    httpServer.close(() => {
+      console.log('[Server] HTTP server closed.');
+    });
+    try {
+      await mongoose.connection.close();
+      console.log('[Server] MongoDB connection closed.');
+    } catch (err) {
+      // Ignore — connection may not exist
+    }
+    setTimeout(() => process.exit(0), 3000);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 startServer().catch((err) => {

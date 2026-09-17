@@ -17,6 +17,13 @@ router.post('/', upload.single('image'), async (req: Request, res: Response): Pr
     const barcode = req.body.barcode as string | undefined;
     const demoType = req.body.demoType as string | undefined;
 
+    // Validate uploaded file MIME type
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff'];
+    if (file && !ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      res.status(400).json({ error: `Invalid file type: ${file.mimetype}. Only image files are accepted.` });
+      return;
+    }
+
     // Generate unique scanId
     const scanId = `scan_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
 
@@ -35,14 +42,15 @@ router.post('/', upload.single('image'), async (req: Request, res: Response): Pr
     }
 
     // Initialize scan record
+    const isDemoScan = !!demoType && !file;
     const newScan: IScan = {
       scanId,
       status: 'queued',
       stage: 'queued',
       progress: 5,
       barcode: barcode || undefined,
-      imageUrl: file ? `data:${file.mimetype};base64,${file.buffer.toString('base64').slice(0, 1000)}...` : undefined,
-      demo: true,
+      imageUrl: file ? `data:${file.mimetype};base64,${file.buffer.toString('base64')}` : undefined,
+      demo: isDemoScan,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
